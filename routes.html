@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bus Routes | TKRES</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Poppins", sans-serif;
+      background: url("tkr bus.png") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      transition: 0.3s;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 0;
+      transition: 0.3s;
+    }
+    body.dark .overlay {
+      background: rgba(0,0,0,0.8);
+    }
+
+    .page {
+      position: relative;
+      z-index: 5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 900;
+      text-align: center;
+      color: #ffd600;
+      margin-top: 10px;
+      text-shadow: 0px 3px 10px rgba(0,0,0,0.8);
+    }
+
+    table {
+      width: 100%;
+      max-width: 1100px;
+      border-collapse: collapse;
+      font-size: 1.05rem;
+      border-radius: 10px;
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.45);
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 14px;
+      text-align: center;
+    }
+
+    th {
+      background: rgba(0,0,0,0.6);
+      color: #ffd600;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    tr:nth-child(even) { background: rgba(255,255,255,0.12); }
+    tr:nth-child(odd)  { background: rgba(255,255,255,0.06); }
+
+    .back-btn {
+      margin-top: 26px;
+      margin-bottom: 12px;
+      display: inline-block;
+      text-decoration: none;
+      color: #000;
+      background: #ffd600;
+      padding: 12px 24px;
+      border-radius: 999px;
+      transition: 0.3s;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .back-btn:hover {
+      background: #ffea00;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="overlay"></div>
+
+<div class="page">
+
+  <h1>College Bus Routes</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Route No.</th>
+        <th>Start</th>
+        <th>Destination</th>
+        <th>Start Time</th>
+        <th>Reach Time</th>
+        <th>Evening Return</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Narapally</td><td>TKR College</td><td>08:00 AM</td><td>09:15 AM</td><td>04:45 PM</td></tr>
+      <tr><td>2</td><td>Mehdipatnam</td><td>TKR College</td><td>08:00 AM</td><td>09:15 AM</td><td>04:40 PM</td></tr>
+      <tr><td>3</td><td>Malkajgiri</td><td>TKR College</td><td>08:00 AM</td><td>09:10 AM</td><td>04:55 PM</td></tr>
+      <tr><td>4</td><td>Hayath Nagar</td><td>TKR College</td><td>08:00 AM</td><td>09:10 AM</td><td>04:50 PM</td></tr>
+      <tr><td>5</td><td>Alwal</td><td>TKR College</td><td>08:00 AM</td><td>09:15 AM</td><td>04:45 PM</td></tr>
+      <tr><td>6</td><td>Mushirabad</td><td>TKR College</td><td>08:10 AM</td><td>09:15 AM</td><td>04:40 PM</td></tr>
+      <tr><td>7</td><td>ECIL</td><td>TKR College</td><td>08:00 AM</td><td>09:10 AM</td><td>04:45 PM</td></tr>
+      <tr><td>8</td><td>Chandrayangutta</td><td>TKR College</td><td>08:05 AM</td><td>09:15 AM</td><td>04:45 PM</td></tr>
+      <tr><td>9</td><td>Kukatpally</td><td>TKR College</td><td>07:50 AM</td><td>09:10 AM</td><td>04:55 PM</td></tr>
+    </tbody>
+  </table>
+
+  <a href="index.html" class="back-btn">⬅ Back to Home</a>
+
+</div>
+
+<script>
+  // Sync theme with index.html
+  const theme = localStorage.getItem("tkres-theme");
+  if (theme === "dark") {
+    document.body.classList.add("dark");
+  }
+</script>
+
+</body>
+</html>

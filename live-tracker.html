@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Bus Tracker | TKRES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 18px;
+      font-family: "Poppins", sans-serif;
+      background: url("tkr bus.png") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      transition: 0.3s ease;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 0;
+      transition: 0.3s ease;
+    }
+    body.dark .overlay {
+      background: rgba(0,0,0,0.8);
+    }
+
+    .page {
+      position: relative;
+      z-index: 5;
+      min-height: 100vh;
+      display:flex;
+      flex-direction:column;
+      width:100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ffd600;
+      font-size: 2.6rem;
+      font-weight: 900;
+      margin: 6px 0 10px;
+      text-shadow: 0px 3px 10px rgba(0,0,0,0.8);
+    }
+
+    .subtitle {
+      text-align:center;
+      font-size:1.05rem;
+      margin-bottom:16px;
+      opacity:0.9;
+    }
+
+    .top-controls {
+      max-width:1100px;
+      margin:0 auto 10px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .select-group {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    label {
+      font-size:0.95rem;
+      opacity:0.9;
+    }
+
+    select {
+      padding:8px 10px;
+      border-radius:8px;
+      border:none;
+      font-size:0.95rem;
+    }
+
+    #map {
+      width:100%;
+      max-width:1100px;
+      height:70vh;
+      margin:0 auto;
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow:0 8px 22px rgba(0,0,0,0.5);
+    }
+
+    .info-chip {
+      font-size:0.9rem;
+      background:rgba(0,0,0,0.6);
+      padding:6px 10px;
+      border-radius:999px;
+    }
+
+    .back-btn {
+      display:block;
+      width:max-content;
+      margin:18px auto 8px;
+      text-decoration:none;
+      color:#000;
+      background:#ffd600;
+      padding:10px 22px;
+      border-radius:999px;
+      font-weight:700;
+      font-size:0.98rem;
+      transition:0.3s;
+    }
+    .back-btn:hover {
+      background:#ffeb3b;
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="page">
+
+  <h1>Live Bus Tracker</h1>
+  <div class="subtitle">
+    View live locations of college buses. Select your route to highlight your bus. 🚌
+  </div>
+
+  <div class="top-controls">
+    <div class="select-group">
+      <label for="routeFilter">Filter by Route:</label>
+      <select id="routeFilter">
+        <option value="all">All Routes</option>
+        <option value="1">Route 1 – Narapally</option>
+        <option value="2">Route 2 – Mehdipatnam</option>
+        <option value="3">Route 3 – Malkajgiri</option>
+        <option value="4">Route 4 – Hayath Nagar</option>
+        <option value="5">Route 5 – Alwal</option>
+        <option value="6">Route 6 – Musheerabad</option>
+        <option value="7">Route 7 – ECIL</option>
+        <option value="8">Route 8 – Chandrayangutta</option>
+        <option value="9">Route 9 – Kukatpally</option>
+      </select>
+    </div>
+
+    <div class="info-chip" id="lastUpdated">
+      Last update: –
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <a href="index.html" class="back-btn">⬅ Back to Home</a>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
+
+<script>
+  // THEME SYNC
+  const theme = localStorage.getItem("tkres-theme");
+  if (theme === "dark") document.body.classList.add("dark");
+
+  // Firebase config – must be SAME as driver-tracker.html
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "XXXXXXX",
+    appId: "1:XXXXXXX:web:XXXXXXX"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Leaflet Map
+  const map = L.map('map').setView([17.3850, 78.4867], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom: 19
+  }).addTo(map);
+
+  const routeFilter = document.getElementById("routeFilter");
+  const lastUpdatedEl = document.getElementById("lastUpdated");
+
+  const busIcon = () => L.divIcon({
+    className: "bus-marker",
+    html: `<div style="
+      font-size:26px;
+      text-shadow:0 0 4px #000;
+    ">🚌</div>`
+  });
+
+  const busMarkers = {}; // busId -> marker
+
+  function updateBusMarkers(busesData) {
+    // busesData is object: { BUS1:{...}, BUS2:{...} }
+    const filterVal = routeFilter.value;
+
+    Object.keys(busesData || {}).forEach(busId => {
+      const b = busesData[busId];
+      if (!b || !b.lat || !b.lng) return;
+
+      const showThis =
+        filterVal === "all" || String(b.route) === String(filterVal);
+
+      // If marker doesn't exist, create it
+      if (!busMarkers[busId]) {
+        const marker = L.marker([b.lat, b.lng], { icon: busIcon() })
+          .bindPopup(renderPopup(b));
+        busMarkers[busId] = marker;
+      }
+
+      // Update marker position + popup
+      busMarkers[busId].setLatLng([b.lat, b.lng]);
+      busMarkers[busId].setPopupContent(renderPopup(b));
+
+      if (showThis) {
+        if (!map.hasLayer(busMarkers[busId])) {
+          busMarkers[busId].addTo(map);
+        }
+      } else {
+        if (map.hasLayer(busMarkers[busId])) {
+          map.removeLayer(busMarkers[busId]);
+        }
+      }
+    });
+
+    // Remove markers for buses that no longer exist
+    Object.keys(busMarkers).forEach(busId => {
+      if (!busesData || !busesData[busId]) {
+        if (map.hasLayer(busMarkers[busId])) {
+          map.removeLayer(busMarkers[busId]);
+        }
+        delete busMarkers[busId];
+      }
+    });
+
+    // Update last updated time
+    const now = new Date();
+    lastUpdatedEl.textContent = "Last update: " + now.toLocaleTimeString();
+  }
+
+  function renderPopup(b) {
+    const timeStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString() : "–";
+    return `
+      <strong>${b.busId}</strong><br>
+      Route: ${b.route || "-"}<br>
+      Driver: ${b.driver || "-"}<br>
+      Last update: ${timeStr}
+    `;
+  }
+
+  // Listen for changes in /buses
+  db.ref("buses").on("value", snapshot => {
+    const data = snapshot.val();
+    updateBusMarkers(data);
+  });
+
+  // Reapply filter when route changes
+  routeFilter.addEventListener("change", () => {
+    db.ref("buses").once("value").then(snap => {
+      updateBusMarkers(snap.val());
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Body - same background as frontend */
+body {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: 
+    url("https://tse3.mm.bing.net/th/id/OIP.d9efBHA6V0VqIAKDBcKDiQHaDt?pid=Api&P=0&h=180")
+    no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+}
+
+/* Form Container */
+.form-container {
+  background: rgba(255, 255, 255, 0.1); /* transparent glass */
+  backdrop-filter: blur(12px);
+  padding: 40px;
+  border-radius: 18px;
+  width: 360px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+
+.form-container h2 {
+  margin-bottom: 20px;
+  font-size: 2rem;
+  color: #ffcc00; /* yellow title */
+  text-shadow: 0 0 12px rgba(0,0,0,0.7);
+}
+
+/* Input Fields */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+form input {
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 8px;
+  outline: none;
+  font-size: 1rem;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+form input::placeholder {
+  color: rgba(255,255,255,0.7);
+}
+
+/* Button */
+form button {
+  padding: 12px;
+  background: linear-gradient(90deg, #ffcc00, #ff9800);
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+form button:hover {
+  background: linear-gradient(90deg, #ffb300, #e68900);
+  transform: scale(1.05);
+}
+
+/* Links */
+form p {
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+form a {
+  color: #ffcc00;
+  text-decoration: none;
+}
+
+form a:hover {
+  text-decoration: underline;
+}

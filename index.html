@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>College Bus Tracking | TKRES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --accent: #ffd600;
+      --accent-dark: #ffb300;
+      --text-main: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", sans-serif;
+      background: url("tkr bus.png") no-repeat center center fixed; /* your image */
+      background-size: cover;
+      color: var(--text-main);
+      height: 100vh;
+      width: 100vw;
+      overflow-x: hidden;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 0;
+      transition: background 0.3s ease;
+    }
+
+    body.dark .overlay {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .page-wrapper {
+      position: relative;
+      z-index: 5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .college-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      margin: 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      backdrop-filter: blur(7px);
+      font-size: 15px;
+    }
+
+    .college-name {
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .college-sub {
+      font-size: 13px;
+    }
+
+    .college-code {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .theme-toggle {
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* small logged-in badge */
+    .user-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+      margin-right: 8px;
+    }
+
+    .main-block {
+      margin-top: 3vh;
+      text-align: center;
+      padding: 0 10px;
+    }
+
+    .main-title {
+      font-size: clamp(3rem, 6vw, 4.4rem);
+      font-weight: 800;
+      color: var(--accent);
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.7);
+      margin-bottom: 12px;
+    }
+
+    .sub-text {
+      font-size: 18px;
+      font-weight: 300;
+      font-style: italic;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-strip {
+      margin-top: 16px;
+      background: rgba(0, 0, 0, 0.55);
+      border-radius: 999px;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 12px;
+      width: 92%;
+      max-width: 960px;
+      margin-left: auto;
+      margin-right: auto;
+      font-size: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .nav-item {
+      cursor: pointer;
+      padding: 6px 15px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .quote-text {
+      margin-top: 14px;
+      font-size: 15px;
+      font-style: italic;
+      opacity: 0.9;
+    }
+
+    .footer {
+      margin-top: auto;
+      padding: 14px 0;
+      font-size: 14px;
+      background: rgba(0, 0, 0, 0.65);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="page-wrapper">
+
+  <div class="college-bar">
+    <div>
+      <div class="college-name">Teegala Krishna Reddy Engineering College</div>
+      <div class="college-sub">(Autonomous) • TKRES • Hyderabad</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;">
+      <!-- Logged in badge (filled by JS) -->
+      <div id="userBadge" class="user-badge"></div>
+
+      <div class="college-code">Counselling Code: <strong>TKEM</strong></div>
+      <button id="themeToggleBtn" class="theme-toggle">
+        <span id="themeEmoji">🌙</span>
+        <span id="themeLabel">Dark mode</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="main-block">
+
+    <h1 class="main-title">College Bus Tracking</h1>
+
+    <div class="sub-text">
+      Real-time bus tracking, routes & stop details.
+    </div>
+
+    <nav class="nav-strip">
+      <div class="nav-item" onclick="location.href='routes.html'">Bus Routes</div>
+      <div class="nav-item" onclick="location.href='live-tracker.html'">Live Bus Tracker</div>
+      <div class="nav-item" onclick="location.href='drivers.html'">Driver Info</div>
+      <div class="nav-item" onclick="location.href='stops.html'">Bus Stops</div>
+      <div class="nav-item" onclick="location.href='fees.html'">Fee Payment</div>
+    </nav>
+
+    <div class="quote-text">
+      Your all-in-one solution for college bus management, real-time tracking, and hassle-free commuting.
+    </div>
+  </div>
+
+  <footer class="footer">
+    © 2025 | College Bus Tracking – TKRES
+  </footer>
+
+</div>
+
+<script>
+  // 🔒 Simple access control: redirect to login if not logged in
+  const role = localStorage.getItem("tkresRole");
+  const userId = localStorage.getItem("tkresUserId");
+  if (!role || !userId) {
+    window.location.href = "login.html";
+  }
+
+  // Show logged in info
+  const userBadge = document.getElementById("userBadge");
+  if (role && userId) {
+    const roleNice = role === "driver" ? "Driver" : "Student";
+    userBadge.textContent = roleNice + " | " + userId;
+  }
+
+  // DARK MODE
+  const body = document.body;
+  const toggle = document.getElementById("themeToggleBtn");
+  const emoji = document.getElementById("themeEmoji");
+  const label = document.getElementById("themeLabel");
+
+  toggle.addEventListener("click", () => {
+    const isDark = body.classList.toggle("dark");
+    emoji.textContent = isDark ? "☀️" : "🌙";
+    label.textContent = isDark ? "Light mode" : "Dark mode";
+  });
+</script>
+
+</body>
+</html>
