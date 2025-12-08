@@ -1,0 +1,227 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Driver Live Tracking | TKRES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Poppins", sans-serif;
+      position: relative;
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.7)),
+        url("{% static 'images/tkr_bus.png' %}") no-repeat center center fixed;
+      background-size: cover;
+      z-index: -1;
+    }
+    body.dark::before { background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)), url("{% static 'images/tkr_bus.png' %}"); }
+
+    .page {
+      position: relative;
+      min-height: 100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      width:100%;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 900;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      color: #ffd600;
+      text-shadow: 0 3px 10px rgba(0,0,0,0.8);
+      text-align:center;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      opacity:0.9;
+      margin-bottom: 18px;
+      text-align:center;
+    }
+
+    .card {
+      width:100%;
+      max-width:600px;
+      background:rgba(0,0,0,0.6);
+      border-radius:14px;
+      padding:18px 20px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.4);
+      backdrop-filter:blur(8px);
+    }
+
+    label { display:block; font-size:0.95rem; margin-bottom:4px; opacity:0.9; }
+    select, input {
+      width:100%;
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      margin-bottom:12px;
+      font-size:0.95rem;
+    }
+
+    .btn-row { display:flex; gap:10px; margin-top:8px; }
+
+    .btn {
+      flex:1; padding:10px 0; border-radius:999px; border:none; font-weight:700;
+      cursor:pointer; font-size:1rem;
+    }
+    .btn-start { background:#00c853; color:#000; }
+    .btn-stop  { background:#ff5252; color:#fff; }
+
+    .btn-start:hover { background:#00e676; }
+    .btn-stop:hover  { background:#ff1744; }
+
+    .status { margin-top:12px; font-size:0.95rem; }
+    .status span.label { opacity:0.85; }
+
+    .back-btn {
+      margin-top:24px;
+      text-decoration:none;
+      color:#000;
+      background:#ffd600;
+      padding:10px 22px;
+      border-radius:999px;
+      font-weight:700;
+      font-size:0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <h1>Driver Live Tracking</h1>
+  <div class="subtitle">
+    Select your bus and press <strong>Start</strong>. Students will see your live location on the map. 🚌
+  </div>
+
+  <div class="card">
+    <label for="driverName">Driver Name</label>
+    <input type="text" id="driverName" placeholder="e.g., PRASAD" />
+
+    <label for="busId">Bus / Route</label>
+    <select id="busId">
+      <option value="">Select Bus</option>
+      <option value="BUS1">Bus 1 – Route 1 (Narapally)</option>
+      <option value="BUS2">Bus 2 – Route 2 (Mehdipatnam)</option>
+      <option value="BUS3">Bus 3 – Route 3 (Malkajgiri)</option>
+      <option value="BUS4">Bus 4 – Route 4 (Hayath Nagar)</option>
+      <option value="BUS5">Bus 5 – Route 5 (Alwal)</option>
+      <option value="BUS6">Bus 6 – Route 6 (Musheerabad)</option>
+      <option value="BUS7">Bus 7 – Route 7 (ECIL)</option>
+      <option value="BUS8">Bus 8 – Route 8 (Chandrayangutta)</option>
+      <option value="BUS9">Bus 9 – Route 9 (Kukatpally)</option>
+    </select>
+
+    <div class="btn-row">
+      <button class="btn btn-start" onclick="startTracking()">▶ Start</button>
+      <button class="btn btn-stop" onclick="stopTracking()">■ Stop</button>
+    </div>
+
+    <div class="status">
+      <div><span class="label">Tracking Status:</span> <span id="statusText">Not started</span></div>
+      <div><span class="label">Last Location:</span> <span id="locText">–</span></div>
+      <div><span class="label">Last Updated:</span> <span id="timeText">–</span></div>
+    </div>
+  </div>
+
+  <!-- ✅ FIXED URL NAME -->
+  <a href="{% url 'student_index' %}" class="back-btn">⬅ Back to Home</a>
+
+</div>
+
+<script>
+  // BLOCK PAGE IF STUDENT
+ 
+
+  function logout() {
+    localStorage.clear();
+  }
+</script>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
+
+<script>
+
+  // TODO: Add your real Firebase credentials later
+  const firebaseConfig = {
+    apiKey: "AIzaSyB1RjGjAZ74fwhWwxTu7GxPIZvJKUsHBys",
+    authDomain: "tkres-bus-tracking.firebaseapp.com",
+    databaseURL: "https://tkres-bus-tracking-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tkres-bus-tracking",
+    storageBucket: "tkres-bus-tracking.firebasestorage.app",
+    messagingSenderId: "284217789696",
+    appId: "1:284217789696:web:44fdafc5f67dd78f4777e5"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let watchId = null;
+
+  function startTracking() {
+    const driverName = document.getElementById("driverName").value;
+    const busId = document.getElementById("busId").value;
+
+    if (!driverName || !busId) {
+      alert("Enter driver name and bus selection");
+      return;
+    }
+
+    document.getElementById("statusText").innerText = "Tracking Started";
+
+    watchId = navigator.geolocation.watchPosition(position => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      const data = {
+        lat: lat,
+        lng: lng,
+        driver: driverName,
+        route: busId.replace("BUS", ""),
+        busId: busId,
+        timestamp: Date.now()
+      };
+
+      db.ref("buses/" + busId).set(data);
+
+      document.getElementById("locText").innerText = lat.toFixed(5) + ", " + lng.toFixed(5);
+      document.getElementById("timeText").innerText = new Date().toLocaleTimeString();
+    },
+    error => {
+      alert("GPS Error: " + error.message);
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0
+    });
+  }
+
+  function stopTracking() {
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId);
+      document.getElementById("statusText").innerText = "Stopped";
+      alert("Tracking stopped");
+    }
+  }
+
+</script>
+
+</body>
+</html>

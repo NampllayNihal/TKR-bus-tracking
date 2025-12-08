@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bus Drivers | TKRES</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Poppins", sans-serif;
+      position: relative;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    /* STATIC BACKGROUND IMAGE FROM DJANGO */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: 
+        linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)),
+        url("{% static 'images/tkr_bus.png' %}") no-repeat center center fixed;
+      background-size: cover;
+      z-index: -1;
+    }
+    body.dark::before {
+      background: 
+        linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.92)),
+        url("{% static 'images/tkr_bus.png' %}") no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    .page {
+      position: relative;
+      z-index: 5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 2.9rem;
+      font-weight: 900;
+      text-align: center;
+      color: #ffd600;
+      margin-top: 10px;
+      text-shadow: 0px 3px 10px rgba(0,0,0,0.8);
+    }
+
+    p {
+      font-size: 1.25rem;
+      text-align: center;
+      margin-bottom: 24px;
+      opacity: 0.92;
+      font-weight: 400;
+    }
+
+    table {
+      width: 100%;
+      max-width: 1100px;
+      border-collapse: collapse;
+      font-size: 1.15rem;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(8px);
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 16px;
+      text-align: center;
+    }
+
+    th {
+      background: rgba(0,0,0,0.65);
+      color: #ffd600;
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+
+    tr:nth-child(even) {
+      background: rgba(255,255,255,0.14);
+    }
+    tr:nth-child(odd) {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .back-btn {
+      margin-top: 25px;
+      margin-bottom: 12px;
+      display: inline-block;
+      text-decoration: none;
+      color: #000;
+      background: #ffd600;
+      padding: 12px 24px;
+      border-radius: 999px;
+      transition: 0.3s;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .back-btn:hover {
+      background: #ffeb3b;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <h1>Bus Drivers</h1>
+  <p>Drivers assigned to each route and their contact numbers.</p>
+
+  <table>
+    <tr>
+      <th>Route No.</th>
+      <th>Bus</th>
+      <th>Driver Name</th>
+      <th>Phone Number</th>
+    </tr>
+    <tr><td>1</td><td>🚍 Bus 1</td><td>PRASAD</td><td>8008660490</td></tr>
+    <tr><td>2</td><td>🚍 Bus 2</td><td>MADHURI</td><td>9985873042</td></tr>
+    <tr><td>3</td><td>🚍 Bus 3</td><td>RAJNIKANTH</td><td>9989493803</td></tr>
+    <tr><td>4</td><td>🚍 Bus 4</td><td>NAGABUSHANAM</td><td>9948382601</td></tr>
+    <tr><td>5</td><td>🚍 Bus 5</td><td>K SURESH</td><td>9959175988</td></tr>
+    <tr><td>6</td><td>🚍 Bus 6</td><td>BUSHAN</td><td>8008530283</td></tr>
+    <tr><td>7</td><td>🚍 Bus 7</td><td>VENKAT</td><td>9662454197</td></tr>
+    <tr><td>8</td><td>🚍 Bus 8</td><td>B KRISHNA</td><td>9951276077</td></tr>
+    <tr><td>9</td><td>🚍 Bus 9</td><td>RAMU REDDY</td><td>9630797279</td></tr>
+  </table>
+
+  <!-- ✅ FIXED URL NAME -->
+  <a href="{% url 'student_index' %}" class="back-btn">⬅ Back to Home</a>
+
+</div>
+
+<script>
+  // if driver attempts to open this page — block
+  
+  // DARK MODE
+  const theme = localStorage.getItem("tkres-theme");
+  if (theme === "dark") document.body.classList.add("dark");
+</script>
+
+</body>
+</html>

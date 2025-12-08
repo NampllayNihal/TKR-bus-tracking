@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>College Bus Tracking | TKRES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --accent: #ffd600;
+      --accent-dark: #ffb300;
+      --text-main: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", sans-serif;
+      height: 100vh;
+      overflow-x: hidden;
+      color: var(--text-main);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)),
+        url("{% static 'images/tkr_bus.png' %}") center center / cover no-repeat fixed;
+      z-index: -1;
+    }
+
+    .page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .college-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      margin: 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(7px);
+    }
+
+    .college-name {
+      font-weight: 900;
+      font-size: 24px;
+      text-transform: uppercase;
+    }
+
+    .user-badge {
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.2);
+      margin-right: 12px;
+    }
+
+    .nav-strip {
+      margin-top: 25px;
+      background: rgba(0,0,0,0.55);
+      border-radius: 999px;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      backdrop-filter: blur(6px);
+    }
+
+    .nav-item {
+      cursor: pointer;
+      padding: 8px 18px;
+      border-radius: 999px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 15px;
+    }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 14px;
+      background: rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="page-wrapper">
+
+  <!-- TOP BAR -->
+  <div class="college-bar">
+    <div>
+      <div class="college-name">Teegala Krishna Reddy Engineering College</div>
+      <div>(Autonomous) • TKRES • Hyderabad</div>
+    </div>
+
+    <div style="display:flex;align-items:center;">
+      <div class="user-badge">
+        {% if user.is_superuser %}
+          Admin | {{ user.username }}
+        {% elif user.groups.all.0.name == 'Drivers' %}
+          Driver | {{ user.first_name }}
+        {% else %}
+          Student | {{ user.first_name }}
+        {% endif %}
+      </div>
+
+      <a href="{% url 'logout' %}" style="color:#ffd600;text-decoration:none;font-size:14px;">Logout</a>
+    </div>
+  </div>
+
+
+  <!-- MAIN HEADER -->
+  <div style="text-align:center;margin-top:40px;">
+    <h1 style="font-size:50px;color:var(--accent);font-weight:800;text-shadow:0 3px 10px #000;">
+      College Bus Tracking
+    </h1>
+    <p style="font-size:18px;">Real-time bus tracking, routes & stop details.</p>
+  </div>
+
+
+  <!-- ✅ NAVIGATION (URL NAMES FIXED) -->
+  <nav class="nav-strip">
+      <a class="nav-item" href="{% url 'routes' %}">Bus Routes</a>
+<a class="nav-item" href="{% url 'live-tracker' %}">Live Bus Tracker</a>
+<a class="nav-item" href="{% url 'drivers' %}">Driver Info</a>
+<a class="nav-item" href="{% url 'stops' %}">Bus Stops</a>
+<a class="nav-item" href="{% url 'fees' %}">Fee Payment</a>
+
+  </nav>
+
+
+  <footer class="footer">
+    © 2025 | College Bus Tracking – TKRES
+  </footer>
+
+</div>
+
+</body>
+</html>

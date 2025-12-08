@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | TKRES Bus Tracking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      margin:0;
+      font-family:"Poppins",sans-serif;
+      background:linear-gradient(135deg,#0d47a1,#004d40);
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+    }
+    .login-card{
+      background:rgba(0,0,0,0.55);
+      padding:24px 26px;
+      border-radius:18px;
+      width:95%;
+      max-width:380px;
+      box-shadow:0 8px 25px rgba(0,0,0,0.4);
+      backdrop-filter:blur(6px);
+    }
+    .login-title{
+      font-size:20px;
+      font-weight:700;
+      text-align:center;
+      margin-bottom:4px;
+    }
+    .login-sub{
+      font-size:12px;
+      text-align:center;
+      opacity:0.8;
+      margin-bottom:18px;
+    }
+    .role-toggle{
+      display:flex;
+      background:rgba(255,255,255,0.1);
+      border-radius:999px;
+      padding:3px;
+      margin-bottom:18px;
+    }
+    .role-option{
+      flex:1;
+      text-align:center;
+      font-size:13px;
+      padding:7px 0;
+      border-radius:999px;
+      cursor:pointer;
+      user-select:none;
+      transition:0.3s ease;
+    }
+    .role-option.active{
+      background:#ffd600;
+      color:#000;
+      font-weight:600;
+    }
+    label{
+      display:block;
+      font-size:13px;
+      margin-bottom:4px;
+    }
+    input{
+      width:100%;
+      padding:9px 10px;
+      border-radius:6px;
+      border:none;
+      margin-bottom:12px;
+      font-size:13px;
+    }
+    input:focus{
+      outline:2px solid #ffd600;
+    }
+    .password-field {
+      position: relative;
+    }
+    .eye-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 16px;
+      color: black;
+    }
+    .btn-login{
+      width:100%;
+      padding:10px 0;
+      border-radius:999px;
+      border:none;
+      background:#ffd600;
+      color:#000;
+      font-weight:600;
+      font-size:14px;
+      cursor:pointer;
+      margin-top:4px;
+    }
+    .error-box{
+      color:#ffd1d1;
+      background:#80000060;
+      padding:8px;
+      border-radius:6px;
+      text-align:center;
+      margin-bottom:10px;
+      font-size:13px;
+      display:block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="login-title">TKRES Bus Tracking</div>
+    <div class="login-sub">Login to continue</div>
+
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="error-box">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="role-toggle">
+      <div class="role-option active" data-role="student">Student</div>
+      <div class="role-option" data-role="driver">Driver</div>
+      <div class="role-option" data-role="admin">Admin</div>
+    </div>
+
+<form method="POST" action="{% url 'login' %}">
+  {% csrf_token %}
+
+  <input type="hidden" id="roleInput" name="role" value="student">
+
+  <label id="idLabel">Hall Ticket / Roll No</label>
+  <input type="text" name="username" required>
+
+  <label>Password / PIN</label>
+  <div class="password-field">
+    <input type="password" id="passField" name="password" required>
+    <span class="eye-icon" onclick="togglePass()">👁</span>
+  </div>
+
+  <button type="submit" class="btn-login">Login</button>
+</form>
+
+  </div>
+
+<script>
+const roleOptions = document.querySelectorAll(".role-option");
+const roleInput = document.getElementById("roleInput");
+const idLabel = document.getElementById("idLabel");
+
+// ROLE SELECTION
+roleOptions.forEach(option => {
+  option.addEventListener("click", function () {
+
+    // Remove active from all
+    roleOptions.forEach(btn => btn.classList.remove("active"));
+
+    // Add active to clicked one
+    this.classList.add("active");
+
+    // Update hidden field
+    const role = this.getAttribute("data-role");
+    roleInput.value = role;
+
+    // Update label dynamically
+    if (role === "driver") {
+      idLabel.innerText = "Driver ID / Mobile Number";
+    } 
+    else if (role === "admin") {
+      idLabel.innerText = "Admin Username";
+    } 
+    else {
+      idLabel.innerText = "Hall Ticket / Roll No";
+    }
+  });
+});
+
+// PASSWORD TOGGLE
+function togglePass() {
+  const field = document.getElementById("passField");
+  field.type = field.type === "password" ? "text" : "password";
+}
+</script>
+
+</body>
+</html>

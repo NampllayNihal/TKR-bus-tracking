@@ -1,0 +1,414 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bus Fee Payment | TKRES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Poppins", sans-serif;
+      background:
+        linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)),
+        url("{% static 'images/tkr_bus.png' %}") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      transition: 0.3s ease;
+    }
+
+    body.dark {
+      background:
+        linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.92)),
+        url("{% static 'images/tkr_bus.png' %}") no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    .page {
+      position: relative;
+      z-index: 5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 2.7rem;
+      font-weight: 900;
+      text-align: center;
+      color: #ffd600;
+      margin-top: 10px;
+      text-shadow: 0px 3px 10px rgba(0,0,0,0.8);
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      margin-top: 4px;
+      margin-bottom: 22px;
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    .content-wrapper {
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .card {
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    }
+
+    .card h2 {
+      margin: 0 0 10px 0;
+      font-size: 1.4rem;
+      color: #ffd600;
+    }
+
+    label {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+      opacity: 0.9;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 11px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid #ffd600;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .pay-btn {
+      width: 100%;
+      padding: 11px 0;
+      border-radius: 999px;
+      border: none;
+      background: #ffd600;
+      color: #000;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .pay-btn:hover {
+      background: #ffeb3b;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.98rem;
+    }
+
+    .summary-label {
+      opacity: 0.8;
+    }
+
+    .summary-value {
+      font-weight: 600;
+    }
+
+    .amount-big {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #ffd600;
+      margin: 10px 0 2px;
+    }
+
+    .note {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      margin-top: 8px;
+    }
+
+    .back-btn {
+      margin-top: 26px;
+      margin-bottom: 12px;
+      display: inline-block;
+      text-decoration: none;
+      color: #000;
+      background: #ffd600;
+      padding: 10px 22px;
+      border-radius: 999px;
+      transition: 0.3s;
+      font-weight: 700;
+      font-size: 0.98rem;
+    }
+    .back-btn:hover {
+      background: #ffeb3b;
+    }
+
+    @media (max-width: 900px) {
+      .content-wrapper {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2.1rem;
+      }
+      .subtitle {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <h1>Bus Fee Payment</h1>
+  <div class="subtitle">
+    Pay your college bus fee based on your <strong>route and boarding stop</strong>, as per TKRES Bus Fee Details 2024–25.
+  </div>
+
+  <div class="content-wrapper">
+
+    <!-- LEFT FORM -->
+    <div class="card">
+      <h2>Student Details</h2>
+
+      <label for="studentName">Student Name</label>
+      <input type="text" id="studentName" placeholder="Enter your full name" required>
+
+      <label for="hallTicket">Hall Ticket / Roll No</label>
+      <input type="text" id="hallTicket" placeholder="e.g., 23KQ1A4501" required>
+
+      <div class="two-col">
+        <div>
+          <label for="year">Year</label>
+          <select id="year">
+            <option value="">Select Year</option>
+            <option value="1st Year">1st Year</option>
+            <option value="2nd Year">2nd Year</option>
+            <option value="3rd Year">3rd Year</option>
+            <option value="4th Year">4th Year</option>
+          </select>
+        </div>
+        <div>
+          <label for="branch">Branch</label>
+          <select id="branch">
+            <option value="">Select Branch</option>
+            <option value="CSE">CSE</option>
+            <option value="CSE-AIML">CSE - AIML</option>
+            <option value="CSE-DS">CSE - DS</option>
+            <option value="ECE">ECE</option>
+            <option value="EEE">EEE</option>
+            <option value="IT">IT</option>
+            <option value="MECH">MECH</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="route">Bus Route</label>
+      <select id="route">
+        <option value="">Select Route</option>
+        <option value="1">Route 1 – Narapally (SNGOs)</option>
+        <option value="2">Route 2 – Mehdipatnam</option>
+        <option value="3">Route 3 – Malkajgiri</option>
+        <option value="4">Route 4 – Hayath Nagar</option>
+        <option value="5">Route 5 – Alwal</option>
+        <option value="6">Route 6 – Musheerabad</option>
+        <option value="7">Route 7 – ECIL</option>
+        <option value="8">Route 8 – Chandrayangutta</option>
+        <option value="9">Route 9 – Kukatpally</option>
+      </select>
+
+      <label for="stop">Boarding Stop</label>
+      <select id="stop">
+        <option value="">Select Stop</option>
+      </select>
+
+      <label for="paymentType">Payment Type</label>
+      <select id="paymentType">
+        <option value="full">Full Fee</option>
+        <option value="first">1st Installment (50%)</option>
+        <option value="second">2nd Installment (Remaining 50%)</option>
+      </select>
+
+      <label for="mode">Payment Method</label>
+      <select id="mode">
+        <option value="upi">UPI (GPay / PhonePe / Paytm)</option>
+        <option value="card">Debit / Credit Card</option>
+        <option value="netbanking">Net Banking</option>
+      </select>
+
+      <button class="pay-btn" onclick="handlePayment()">Pay Now</button>
+      <div class="note">
+        * Demo only – integrate Razorpay later
+      </div>
+    </div>
+
+    <!-- RIGHT SUMMARY -->
+    <div class="card">
+      <h2>Payment Summary</h2>
+
+      <div class="summary-row"><span class="summary-label">Route:</span><span class="summary-value" id="summaryRoute">–</span></div>
+      <div class="summary-row"><span class="summary-label">Boarding Stop:</span><span class="summary-value" id="summaryStop">–</span></div>
+      <div class="summary-row"><span class="summary-label">Base Bus Fee:</span><span class="summary-value" id="summaryBase">₹0</span></div>
+      <div class="summary-row"><span class="summary-label">Payment Type:</span><span class="summary-value" id="summaryType">–</span></div>
+
+      <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.25); margin: 10px 0;">
+
+      <div>Amount to Pay</div>
+      <div class="amount-big" id="summaryAmount">₹0</div>
+
+    </div>
+  </div>
+
+  <a href="{% url 'student_index' %}" class="back-btn">⬅ Back to Home</a>
+
+
+</div>
+
+
+<script>
+  const theme = localStorage.getItem("tkres-theme");
+  if (theme === "dark") document.body.classList.add("dark");
+
+
+  const routeStops = {
+    1: {"Narapally": 36000, "Medipally": 35000, "Uppal X Road": 34000, "Nagole": 33000, "Mansoorabad": 32000, "Saroornagar": 30000, "BN Reddy": 29000, "TKR College": 0},
+    2: {"Eeshwar Theatre / Attapur": 36000, "Mehdipatnam": 36000, "Lakdikapool": 35000, "Hyderguda": 34000, "Old MLA Quarters": 33000, "Narayanguda Signal": 32000, "Koti": 31000, "Saibaba / Santosh Nagar": 30000, "Owaisi": 29000, "BN Reddy": 28000, "TKR College": 0},
+    3: {"Neredmet X Road": 36000, "Safilguda": 36000, "Malkajgiri": 35000, "Anand Bagh": 34000, "Mettuguda": 33000, "Tarnaka": 32000, "Uppal X Road": 31000, "Nagole": 30000, "TKR College": 0},
+    4: {"Hayath Nagar": 27000, "Bhagyalatha T Road": 27000, "Shiva Theatre": 27000, "Rythu Bazaar": 26000, "Shiva Sindhu": 26000, "Vaddehi Nagar": 25000, "BN Reddy": 25000, "TKR College": 0},
+    5: {"Alwal": 36000, "Trimulgherry": 36000, "Lothkunta": 35000, "Bolarum": 34000, "Tarnaka": 33000, "Habsiguda": 32000, "Uppal": 31000, "Nagole": 30000, "LB Nagar": 29000, "TKR College": 0},
+    6: {"Lalapet / Tarnaka": 36000, "Sitaphalmandi": 36000, "Warasiguda": 35000, "Musheerabad": 35000, "RTC X Road": 34000, "Ram Nagar": 33000, "Vidya Nagar": 32000, "Nallakunta": 32000, "Sri Rama Theatre": 31000, "Dilsukh Nagar": 30000, "Chaitanya Puri": 29000, "LB Nagar": 28000, "TKR College": 0},
+    7: {"ECIL": 36000, "AS Rao Nagar": 36000, "Kushaiguda": 35000, "ECIL Radhika": 34000, "Tarnaka": 33000, "Habsiguda": 32000, "Uppal": 31000, "Nagole": 30000, "TKR College": 0},
+    8: {"Ring Road Jn Kattedan": 25000, "Bandlaguda": 25000, "Chandrayangutta": 25000, "DRDO": 24000, "Owaisi Hospital": 24000, "TKR College": 0},
+    9: {"JNTU": 36000, "Housing Board, Kukatpally": 36000, "Moosapet": 36000, "Erragadda": 35000, "ESI / SR Nagar": 34000, "Ameerpet": 33000, "Begumpet": 32000, "Police Lane, Rasoolpura": 32000, "TKR College": 0},
+  };
+
+  const routeNames = {
+    1: "Route 1 – Narapally (SNGOs)",
+    2: "Route 2 – Mehdipatnam",
+    3: "Route 3 – Malkajgiri",
+    4: "Route 4 – Hayath Nagar",
+    5: "Route 5 – Alwal",
+    6: "Route 6 – Musheerabad",
+    7: "Route 7 – ECIL",
+    8: "Route 8 – Chandrayangutta",
+    9: "Route 9 – Kukatpally"
+  };
+
+  const routeSelect = document.getElementById("route");
+  const stopSelect = document.getElementById("stop");
+  const paymentTypeSelect = document.getElementById("paymentType");
+
+  const summaryRoute = document.getElementById("summaryRoute");
+  const summaryStop = document.getElementById("summaryStop");
+  const summaryBase = document.getElementById("summaryBase");
+  const summaryType = document.getElementById("summaryType");
+  const summaryAmount = document.getElementById("summaryAmount");
+
+  function resetSummary() {
+    summaryRoute.textContent = "–";
+    summaryStop.textContent = "–";
+    summaryBase.textContent = "₹0";
+    summaryType.textContent = "–";
+    summaryAmount.textContent = "₹0";
+  }
+
+  function updateStopsDropdown() {
+    const routeVal = routeSelect.value;
+    stopSelect.innerHTML = "<option value=''>Select Stop</option>";
+    resetSummary();
+
+    if (!routeVal || !routeStops[routeVal]) return;
+
+    const stops = routeStops[routeVal];
+    Object.keys(stops).forEach(stopName => {
+      stopSelect.innerHTML += `<option value="${stopName}">${stopName}</option>`;
+    });
+  }
+
+  function updateSummary() {
+    const routeVal = routeSelect.value;
+    const stopVal = stopSelect.value;
+    const pType = paymentTypeSelect.value;
+
+    if (!routeVal || !stopVal || !routeStops[routeVal]) {
+      resetSummary();
+      return;
+    }
+
+    const baseFee = routeStops[routeVal][stopVal] || 0;
+    let amount = baseFee;
+    let typeText = "Full Fee";
+
+    if (pType === "first") {
+      amount = Math.round(baseFee / 2);
+      typeText = "1st Installment (50%)";
+    } else if (pType === "second") {
+      amount = Math.round(baseFee / 2);
+      typeText = "2nd Installment (Remaining 50%)";
+    }
+
+    summaryRoute.textContent = routeNames[routeVal];
+    summaryStop.textContent = stopVal;
+    summaryBase.textContent = "₹" + baseFee.toLocaleString("en-IN");
+    summaryType.textContent = typeText;
+    summaryAmount.textContent = "₹" + amount.toLocaleString("en-IN");
+  }
+
+  routeSelect.addEventListener("change", () => {
+    updateStopsDropdown();
+    updateSummary();
+  });
+
+  stopSelect.addEventListener("change", updateSummary);
+  paymentTypeSelect.addEventListener("change", updateSummary);
+
+  function handlePayment() {
+    const name = document.getElementById("studentName").value.trim();
+    const ht = document.getElementById("hallTicket").value.trim();
+    const routeVal = routeSelect.value;
+    const stopVal = stopSelect.value;
+
+    if (!name || !ht || !routeVal || !stopVal) {
+      alert("Please fill in Name, Hall Ticket, Route and Stop before paying.");
+      return;
+    }
+
+    updateSummary();
+
+    alert(
+      "Payment demo:\n\n" +
+      "Student: " + name + "\n" +
+      "Hall Ticket: " + ht + "\n" +
+      "Route: " + routeNames[routeVal] + "\n" +
+      "Boarding Stop: " + stopVal + "\n" +
+      "Amount: " + summaryAmount.textContent + "\n\n" +
+      "In real use, this will redirect to Razorpay."
+    );
+  }
+</script>
+
+</body>
+</html>

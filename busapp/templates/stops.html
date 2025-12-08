@@ -1,0 +1,336 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>College Bus Stops | TKRES</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+  body {
+    margin: 0;
+    padding: 18px;
+    font-family: "Poppins", sans-serif;
+    background:
+      linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)),
+      url("{% static 'images/tkr_bus.png' %}") no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+    transition: 0.3s ease;
+  }
+  body.dark {
+    background:
+      linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)),
+      url("{% static 'images/tkr_bus.png' %}") no-repeat center center fixed;
+  }
+
+  .page {
+    min-height: 100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  h1 {
+    text-align: center;
+    color: #ffd600;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 14px;
+    margin-top: 5px;
+    text-shadow: 0px 2px 8px rgba(0,0,0,0.8);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(0,0,0,0.45);
+    border-radius: 10px;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    margin-bottom: 20px;
+  }
+
+  th,td {
+    padding: 12px;
+    text-align: center;
+  }
+
+  th {
+    background: rgba(0,0,0,0.6);
+    color: #ffd600;
+    font-weight: bold;
+  }
+
+  tr:nth-child(even) {
+    background: rgba(255,255,255,0.1);
+  }
+  tr:nth-child(odd) {
+    background: rgba(255,255,255,0.05);
+  }
+
+  .btn {
+    padding: 6px 12px;
+    background: #ffd600;
+    color: #000;
+    border:none;
+    border-radius:999px;
+    cursor:pointer;
+    font-weight:600;
+  }
+
+  .btn:hover {
+    background:#ffeb3b;
+  }
+
+  .back-btn {
+    display:block;
+    width:max-content;
+    margin: 22px auto;
+    text-decoration:none;
+    color:#000;
+    background:#ffd600;
+    padding:10px 20px;
+    border-radius:999px;
+    font-weight:700;
+    transition:0.3s;
+  }
+  .back-btn:hover {
+    background:#ffeb3b;
+  }
+
+  .modal {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.70);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+  }
+
+  .modal-card {
+    width:90%;
+    max-width:900px;
+    background:rgba(0,0,0,0.85);
+    border:1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    border-radius:10px;
+    overflow:hidden;
+    color:#fff;
+  }
+
+  #mapPopup { height: 78vh; width:100%; }
+
+  .stops-list { padding:12px 18px;font-size: 1rem; }
+  li { margin-bottom:6px; }
+
+  .close-btn {
+    background:#ffd600;
+    border:none;
+    padding:6px 12px;
+    border-radius: 6px;
+    cursor:pointer;
+    font-weight:600;
+    color:#000;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<h1>College Bus Stops</h1>
+
+<table>
+<tr>
+  <th>Route No.</th>
+  <th>Start Location</th>
+  <th>Start Time</th>
+  <th>Reach Time</th>
+  <th>Actions</th>
+</tr>
+<tbody id="routesTableBody"></tbody>
+</table>
+
+<!-- ✅ FIXED -->
+<a href="{% url 'student_index' %}" class="back-btn">⬅ Back to Home</a>
+
+<!-- MAP POPUP -->
+<div id="mapModal" class="modal">
+  <div class="modal-card">
+    <div style="padding:10px;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;color:#ffd600;">🗺️ Route Map</h3>
+      <button onclick="closeMapModal()" class="close-btn">✖</button>
+    </div>
+    <div id="mapPopup"></div>
+  </div>
+</div>
+
+<!-- STOPS LIST POPUP -->
+<div id="stopsListModal" class="modal">
+  <div class="modal-card">
+    <div style="padding:10px;display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="stopsTitle" style="margin:0;color:#ffd600;">Stops</h3>
+      <button onclick="closeStopsModal()" class="close-btn">✖</button>
+    </div>
+    <div id="stopsContent" class="stops-list"></div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+
+/* ✅ THEME SYNC */
+const theme = localStorage.getItem("tkres-theme");
+if (theme === "dark") document.body.classList.add("dark");
+
+/* ✅ YOUR FULL JS BELOW — UNCHANGED */
+
+
+// =========================
+// ROUTES DATA
+// =========================
+const routes={
+  1:{start:"Narapally",startTime:"08:00",reachTime:"09:15",stops:[
+      ["Narapally","08:00",17.3975,78.6400],
+      ["Medipally","08:10",17.3989,78.5820],
+      ["Uppal X Road","08:20",17.4058,78.5593],
+      ["Nagole","08:30",17.3687,78.5583],
+      ["BN Reddy","08:55",17.3352,78.5522],
+      ["TKR College","09:15",17.323257,78.536408]
+  ],color:"red"},
+
+  2:{start:"Mehdipatnam",startTime:"08:00",reachTime:"09:15",stops:[
+      ["Attapur","08:00",17.3710,78.4550],
+      ["Mehdipatnam","08:10",17.3840,78.4563],
+      ["Lakdikapool","08:20",17.4062,78.4690],
+      ["Narayanguda","08:40",17.3929,78.4962],
+      ["Koti","09:00",17.3692,78.4804],
+      ["TKR College","09:15",17.323257,78.536408]
+  ],color:"blue"},
+
+  3:{start:"Malkajgiri",startTime:"08:00",reachTime:"09:10",stops:[
+      ["Safilguda","08:00",17.4600,78.5320],
+      ["Malkajgiri","08:10",17.4472,78.5262],
+      ["Mettuguda","08:30",17.4297,78.5239],
+      ["TKR College","09:10",17.323257,78.536408]
+  ],color:"green"},
+  4:{start:"Hayath Nagar",startTime:"08:00",reachTime:"09:10",stops:[
+      ["Hayath Nagar","08:00",17.3125,78.6170],
+      ["BN Reddy","08:15",17.3161,78.6095],
+      ["TKR College","09:10",17.323257,78.536408]
+  ],color:"orange"},
+
+  5:{start:"Alwal",startTime:"08:00",reachTime:"09:15",stops:[
+      ["Alwal","08:00",17.4940,78.5110],
+      ["Bolarum","08:35",17.5560,78.4865],
+      ["TKR College","09:15",17.323257,78.536408]
+  ],color:"purple"},
+
+  6:{start:"Musheerabad",startTime:"08:10",reachTime:"09:15",stops:[
+      ["Musheerabad","08:10",17.4086,78.5012],
+      ["Vidyanagar","08:40",17.4150,78.5300],
+      ["TKR College","09:15",17.323257,78.536408]
+  ],color:"brown"},
+
+  7:{start:"ECIL",startTime:"08:00",reachTime:"09:10",stops:[
+      ["ECIL","08:00",17.4843,78.5521],
+      ["Neredmet","08:35",17.4850,78.5470],
+      ["TKR College","09:10",17.323257,78.536408]
+  ],color:"cyan"},
+
+  8:{start:"Chandrayangutta",startTime:"08:05",reachTime:"09:15",stops:[
+      ["Chandrayangutta","08:05",17.3578,78.4666],
+      ["Owaisi Hospital","08:45",17.3703,78.4860],
+      ["TKR College","09:15",17.323257,78.536408]
+  ],color:"pink"},
+
+  9:{start:"Kukatpally",startTime:"07:50",reachTime:"09:10",stops:[
+      ["Kukatpally","07:50",17.4931,78.3990],
+      ["Moosapet","08:30",17.4740,78.4300],
+      ["TKR College","09:10",17.323257,78.536408]
+  ],color:"teal"},
+};
+
+
+
+const tbody=document.getElementById("routesTableBody");
+
+Object.keys(routes).forEach(id=>{
+  tbody.innerHTML+=`
+    <tr>
+      <td>${id}</td>
+      <td>${routes[id].start}</td>
+      <td>${routes[id].startTime}</td>
+      <td>${routes[id].reachTime}</td>
+      <td>
+        <button class="btn" onclick="openMap(${id})">🗺️ Map</button>
+        <button class="btn" onclick="openStopsList(${id})">📍 Stops</button>
+      </td>
+    </tr>`;
+});
+
+let activeRoute=null;
+let currentLayerGroup=null;
+
+const map=L.map('mapPopup').setView([17.38,78.48],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+
+function openMap(id){
+  activeRoute=id;
+  document.getElementById("mapModal").style.display="flex";
+  setTimeout(()=>map.invalidateSize(),300);
+
+  if(currentLayerGroup){
+      currentLayerGroup.clearLayers();
+      map.removeLayer(currentLayerGroup);
+  }
+
+  const r=routes[id];
+  const latlngs=r.stops.map(s=>[s[2],s[3]]);
+
+  const polyline = L.polyline(latlngs,{color:r.color,weight:5});
+
+  const markers = r.stops.map((s,i)=>{
+    let emoji="📍";
+    if(i===0) emoji="🚌";
+    if(i===r.stops.length-1) emoji="🎓";
+
+    return L.marker([s[2],s[3]],{
+      icon:L.divIcon({className:"marker-emoji",html:`<div style="font-size:28px;">${emoji}</div>`})
+    }).bindPopup(`<strong>${s[0]}</strong><br>🕒 ${s[1]}`);
+  });
+
+  currentLayerGroup = L.layerGroup([polyline, ...markers]).addTo(map);
+  map.fitBounds(latlngs,{padding:[40,40]});
+}
+
+function closeMapModal(){
+  document.getElementById("mapModal").style.display="none";
+}
+
+function openStopsList(id){
+  const r=routes[id];
+  document.getElementById("stopsTitle").innerText=`Route ${id} Stops`;
+
+  let html="<ul>";
+  r.stops.forEach(s=>{
+    html+=`<li>${s[0]} — 🕒 ${s[1]}</li>`;
+  });
+  html+="</ul>";
+
+  document.getElementById("stopsContent").innerHTML=html;
+  document.getElementById("stopsListModal").style.display="flex";
+}
+
+function closeStopsModal(){
+  document.getElementById("stopsListModal").style.display="none";
+}
+
+</script>
+</body>
+</html>
