@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: tkr-bus-tracking
-    env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn busproject.wsgi"
