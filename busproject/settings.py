@@ -4,10 +4,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-6_5w7je7*+q-pm2)280-a^u-_run7+w_4k22#^0ose)8pmn+l('
 
-DEBUG = True
+DEBUG = False
 
 # ✅ Allow local testing safely
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = [
+    "tkr-bus-tracking.onrender.com",
+    "localhost",
+    "127.0.0.1"
+]
+
 
 
 INSTALLED_APPS = [
