@@ -86,12 +86,14 @@ USE_TZ = True
 # ===============================
 # ✅ STATIC FILES CONFIG (VERY IMPORTANT)
 # ===============================
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     BASE_DIR / "busapp" / "static",
 ]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
