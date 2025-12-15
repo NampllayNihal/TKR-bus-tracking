@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 
 # -----------------------------
 # USER ROLE MODEL
@@ -19,18 +22,6 @@ class Profile(models.Model):
 
 
 # -----------------------------
-# DRIVER MODEL
-# -----------------------------
-class Driver(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    driver_id = models.CharField(max_length=20, unique=True)
-    phone = models.CharField(max_length=15)
-
-    def __str__(self):
-        return self.driver_id
-
-
-# -----------------------------
 # ROUTE MODEL
 # -----------------------------
 class Route(models.Model):
@@ -42,7 +33,20 @@ class Route(models.Model):
 
 
 # -----------------------------
-# STOP MODEL (Each route has multiple stops)
+# DRIVER MODEL
+# -----------------------------
+class Driver(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    driver_id = models.CharField(max_length=20, unique=True)
+    phone = models.CharField(max_length=15)
+    route = models.ForeignKey(Route, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.driver_id
+
+
+# -----------------------------
+# STOP MODEL
 # -----------------------------
 class Stop(models.Model):
     route = models.ForeignKey(Route, on_delete=models.CASCADE)
@@ -77,10 +81,25 @@ class FeeRecord(models.Model):
     paid_on = models.DateField(auto_now_add=True)
 
     def __str__(self):
-        return f"Fee Record: {self.student.hall_ticket} - ₹{self.amount}"
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+        return f"{self.student.hall_ticket} - ₹{self.amount}"
 
+
+# -----------------------------
+# 🚌 LIVE BUS LOCATION MODEL
+# -----------------------------
+class BusLocation(models.Model):
+    route = models.OneToOneField(Route, on_delete=models.CASCADE)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.route.name} - {self.latitude},{self.longitude}"
+
+
+# -----------------------------
+# AUTO CREATE PROFILE (SAFE)
+# -----------------------------
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     if created:

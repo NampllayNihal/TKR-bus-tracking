@@ -99,8 +99,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
 
 <script>
- 
-
   const theme = localStorage.getItem("tkres-theme");
   if (theme === "dark") document.body.classList.add("dark");
 
@@ -114,72 +112,83 @@
     appId: "1:284217789696:web:44fdafc5f67dd78f4777e5"
   };
 
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
   const map = L.map('map').setView([17.3850, 78.4867], 11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom: 19 }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
 
   const routeFilter = document.getElementById("routeFilter");
   const lastUpdatedEl = document.getElementById("lastUpdated");
 
-  const busMarkers = {};
+  let busMarker = null;
+  let activeListener = null;
 
-  const busIcon = () => L.divIcon({
+  const busIcon = L.divIcon({
     className: "bus-marker",
     html: `<div style="font-size:26px;text-shadow:0 0 4px #000;">🚌</div>`
   });
 
-  function renderPopup(b) {
-    const timeStr = b.timestamp ? new Date(b.timestamp).toLocaleTimeString() : "–";
-    return `
-      <strong>${b.busId}</strong><br>
-      Route: ${b.route || "-"}<br>
-      Driver: ${b.driver || "-"}<br>
-      Last update: ${timeStr}
-    `;
+  function clearMarker() {
+    if (busMarker) {
+      map.removeLayer(busMarker);
+      busMarker = null;
+    }
   }
 
-  function updateBusMarkers(busesData) {
-    const filterVal = routeFilter.value;
+  function listenToRoute(routeVal) {
+    if (activeListener) {
+      activeListener.off();
+      activeListener = null;
+    }
 
-    Object.keys(busesData || {}).forEach(busId => {
-      const b = busesData[busId];
-      if (!b || !b.lat || !b.lng) return;
+    clearMarker();
 
-      const showThis =
-        filterVal === "all" || String(b.route) === String(filterVal);
+    if (routeVal === "all") {
+      lastUpdatedEl.textContent = "Select a route to track";
+      return;
+    }
 
-      if (!busMarkers[busId]) {
-        const marker = L.marker([b.lat, b.lng], { icon: busIcon() })
-          .bindPopup(renderPopup(b));
-        busMarkers[busId] = marker;
+    const busId = "BUS" + routeVal;
+
+    activeListener = db.ref("buses/" + busId);
+
+    activeListener.on("value", snapshot => {
+      const b = snapshot.val();
+
+      if (!b || !b.lat || !b.lng) {
+        lastUpdatedEl.textContent = "Bus not started yet";
+        return;
       }
 
-      busMarkers[busId].setLatLng([b.lat, b.lng]);
-      busMarkers[busId].setPopupContent(renderPopup(b));
+      const latLng = [b.lat, b.lng];
 
-      if (showThis) {
-        if (!map.hasLayer(busMarkers[busId])) {
-          busMarkers[busId].addTo(map);
-        }
+      if (!busMarker) {
+        busMarker = L.marker(latLng, { icon: busIcon }).addTo(map);
       } else {
-        if (map.hasLayer(busMarkers[busId])) {
-          map.removeLayer(busMarkers[busId]);
-        }
+        busMarker.setLatLng(latLng);
       }
-    });
 
-    const now = new Date();
-    lastUpdatedEl.textContent = "Last update: " + now.toLocaleTimeString();
+      busMarker.bindPopup(`
+        <strong>${b.busId}</strong><br>
+        Route: ${b.route}<br>
+        Driver: ${b.driver}<br>
+        Last update: ${new Date(b.timestamp).toLocaleTimeString()}
+      `);
+
+      map.setView(latLng, 13);
+      lastUpdatedEl.textContent =
+        "Last update: " + new Date().toLocaleTimeString();
+    });
   }
 
-  db.ref("buses").on("value", snapshot => {
-  updateBusMarkers(snapshot.val());
-});
-
+  routeFilter.addEventListener("change", () => {
+    listenToRoute(routeFilter.value);
+  });
 </script>
+
 
 </body>
 </html>

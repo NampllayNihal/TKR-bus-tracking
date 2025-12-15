@@ -2,8 +2,17 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
-from .models import Profile, Student
+
+from .models import (
+    Profile,
+    Student,
+    Driver,
+    Route,
+    BusLocation
+)
 
 
 # -------------------------
@@ -22,33 +31,28 @@ def login_page(request):
             messages.error(request, "Invalid username or password")
             return render(request, "login.html")
 
-        # ✅ Superuser → Admin directly
+        # Superuser → Admin
         if user.is_superuser:
             login(request, user)
             return redirect("admin_dashboard")
 
-        # ✅ Normal users MUST have Profile
         try:
             profile = Profile.objects.get(user=user)
         except Profile.DoesNotExist:
-            messages.error(request, "No role assigned to this user. Contact Admin.")
+            messages.error(request, "No role assigned to this user.")
             return render(request, "login.html")
 
-        # ✅ Role Validation
         if profile.role != selected_role:
             messages.error(request, "Role mismatch!")
             return render(request, "login.html")
 
-        # ✅ Login Success
         login(request, user)
 
         if profile.role == "student":
             return redirect("student_index")
-
         elif profile.role == "driver":
             return redirect("driver_dashboard")
-
-        elif profile.role == "admin":
+        else:
             return redirect("admin_dashboard")
 
     return render(request, "login.html")
@@ -98,17 +102,13 @@ def manage_students(request):
             messages.error(request, "Username already exists!")
             return redirect("manage-students")
 
-        # ✅ Create user
         user = User.objects.create_user(
             username=username,
             password=password,
             first_name=name
         )
 
-        # ✅ Assign student role
-        Profile.objects.create(user=user, role="student")
-
-        # ✅ Create student record
+        Profile.objects.filter(user=user).update(role="student")
         Student.objects.create(user=user, hall_ticket=username)
 
         messages.success(request, "Student added successfully!")
@@ -118,55 +118,84 @@ def manage_students(request):
 
 
 def manage_drivers(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
     return render(request, "admin/manage_drivers.html")
 
 
 def manage_routes(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
     return render(request, "admin/manage_routes.html")
 
 
 def manage_fees(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
     return render(request, "admin/manage_fees.html")
 
 
 # -------------------------
-# ✅ ✅ ✅ STUDENT FEATURE PAGES (FIXES YOUR ERROR)
+# STUDENT PAGES
 # -------------------------
 def routes_page(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
     return render(request, "routes.html")
 
 
 def drivers_page(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
     return render(request, "drivers.html")
 
 
 def stops_page(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
     return render(request, "stops.html")
 
 
 def fees_page(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
     return render(request, "fees.html")
 
 
 def live_tracker_page(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
     return render(request, "live-tracker.html")
 
+
+# ==========================================================
+# 🔴 LIVE TRACKING API — DRIVER SENDS LOCATION
+# ==========================================================
+@require_POST
+def update_bus_location(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    try:
+        driver = Driver.objects.get(user=request.user)
+    except Driver.DoesNotExist:
+        return JsonResponse({"error": "Not a driver"}, status=403)
+
+    lat = request.POST.get("latitude")
+    lon = request.POST.get("longitude")
+
+    if not lat or not lon:
+        return JsonResponse({"error": "Invalid data"}, status=400)
+
+    BusLocation.objects.update_or_create(
+        route=driver.route,
+        defaults={
+            "latitude": lat,
+            "longitude": lon
+        }
+    )
+
+    return JsonResponse({"status": "Location updated"})
+
+
+# ==========================================================
+# 🟢 LIVE TRACKING API — STUDENT GETS LOCATION BY ROUTE
+# ==========================================================
+def get_bus_location(request, route_id):
+    try:
+        bus = BusLocation.objects.get(route_id=route_id)
+        return JsonResponse({
+            "latitude": bus.latitude,
+            "longitude": bus.longitude,
+            "updated_at": bus.updated_at
+        })
+    except BusLocation.DoesNotExist:
+        return JsonResponse({"error": "Bus not started yet"})
+    
 
 # -------------------------
 # LOGOUT
@@ -174,3 +203,4 @@ def live_tracker_page(request):
 def logout_user(request):
     logout(request)
     return redirect("login")
+

@@ -174,54 +174,78 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  let watchId = null;
+  
+let watchId = null;
 
-  function startTracking() {
-    const driverName = document.getElementById("driverName").value;
-    const busId = document.getElementById("busId").value;
+function startTracking() {
+  const driverName = document.getElementById("driverName").value;
+  const busId = document.getElementById("busId").value;
 
-    if (!driverName || !busId) {
-      alert("Enter driver name and bus selection");
-      return;
-    }
+  if (!driverName || !busId) {
+    alert("Enter driver name and bus selection");
+    return;
+  }
 
-    document.getElementById("statusText").innerText = "Tracking Started";
+  const routeId = busId.replace("BUS", ""); // BUS1 → 1
 
-    watchId = navigator.geolocation.watchPosition(position => {
+  document.getElementById("statusText").innerText = "Tracking Started";
+
+  watchId = navigator.geolocation.watchPosition(
+    position => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
 
-      const data = {
-        lat: lat,
-        lng: lng,
-        driver: driverName,
-        route: busId.replace("BUS", ""),
-        busId: busId,
-        timestamp: Date.now()
-      };
+      fetch("/api/driver/update-location/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken()
+        },
+        body: JSON.stringify({
+          route_id: routeId,
+          latitude: lat,
+          longitude: lng
+        })
+      });
 
-      db.ref("buses/" + busId).set(data);
+      document.getElementById("locText").innerText =
+        lat.toFixed(5) + ", " + lng.toFixed(5);
 
-      document.getElementById("locText").innerText = lat.toFixed(5) + ", " + lng.toFixed(5);
-      document.getElementById("timeText").innerText = new Date().toLocaleTimeString();
+      document.getElementById("timeText").innerText =
+        new Date().toLocaleTimeString();
     },
     error => {
       alert("GPS Error: " + error.message);
     },
     {
       enableHighAccuracy: true,
-      maximumAge: 0
-    });
-  }
+      maximumAge: 0,
+      timeout: 5000
+    }
+  );
+}
 
-  function stopTracking() {
-    if (watchId) {
-      navigator.geolocation.clearWatch(watchId);
-      document.getElementById("statusText").innerText = "Stopped";
-      alert("Tracking stopped");
+function stopTracking() {
+  if (watchId) {
+    navigator.geolocation.clearWatch(watchId);
+    document.getElementById("statusText").innerText = "Stopped";
+    alert("Tracking stopped");
+  }
+}
+
+// CSRF helper
+function getCSRFToken() {
+  let cookieValue = null;
+  const cookies = document.cookie.split(";");
+  for (let cookie of cookies) {
+    cookie = cookie.trim();
+    if (cookie.startsWith("csrftoken=")) {
+      cookieValue = cookie.substring("csrftoken=".length);
+      break;
     }
   }
-
+  return cookieValue;
+}
 </script>
 
 </body>
