@@ -37,12 +37,12 @@ class Route(models.Model):
 # -----------------------------
 class Driver(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    driver_id = models.CharField(max_length=20, unique=True)
-    phone = models.CharField(max_length=15)
+    driver_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
     route = models.ForeignKey(Route, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
-        return self.driver_id
+        return self.driver_id or f"Driver {self.id}"
 
 
 # -----------------------------
@@ -78,7 +78,7 @@ class Student(models.Model):
 class FeeRecord(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     amount = models.IntegerField()
-    paid_on = models.DateField(auto_now_add=True)
+    paid_on = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.student.hall_ticket} - ₹{self.amount}"

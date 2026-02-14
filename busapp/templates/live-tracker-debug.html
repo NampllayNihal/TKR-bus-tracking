@@ -1,0 +1,339 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Tracker Debug | TKRES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { margin: 0; padding: 0; }
+    body {
+      background: #1a1a1a;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 { color: #ffd600; margin-bottom: 20px; }
+    h2 { color: #00d4ff; margin-top: 20px; margin-bottom: 10px; }
+    .section {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+      padding: 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+    }
+    .status-ok { color: #00ff00; font-weight: bold; }
+    .status-error { color: #ff0000; font-weight: bold; }
+    .status-warning { color: #ffaa00; font-weight: bold; }
+    .status-info { color: #00d4ff; font-weight: bold; }
+    #firebaseData {
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-size: 12px;
+    }
+    .button {
+      background: #ffd600;
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+    }
+    .button:hover { background: #ffeb3b; }
+    .button:disabled { background: #666; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🚌 Live Tracking Debug Console</h1>
+
+  <div class="section">
+    <h2>🔍 System Status</h2>
+    <div class="status">
+      <span>Firebase SDK:</span>
+      <span id="firebaseStatus" class="status-warning">Checking...</span>
+    </div>
+    <div class="status">
+      <span>Realtime Database:</span>
+      <span id="databaseStatus" class="status-warning">Checking...</span>
+    </div>
+    <div class="status">
+      <span>Geolocation API:</span>
+      <span id="geoStatus" class="status-warning">Checking...</span>
+    </div>
+    <div class="status">
+      <span>Browser Location Permission:</span>
+      <span id="permStatus" class="status-warning">Checking...</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🗄️ Firebase Data</h2>
+    <button class="button" onclick="refreshFirebaseData()">🔄 Refresh</button>
+    <button class="button" onclick="autoRefresh()">👁️ Auto Refresh</button>
+    <button class="button" onclick="stopAutoRefresh()">⏹️ Stop</button>
+    <div id="firebaseData">Waiting for data...</div>
+  </div>
+
+  <div class="section">
+    <h2>📍 GPS Data</h2>
+    <button class="button" onclick="getGPSLocation()">Get Current Location</button>
+    <button class="button" onclick="watchGPSLocation()">Watch Location</button>
+    <button class="button" onclick="stopWatch()">Stop Watching</button>
+    <div id="gpsData" style="background: #1a1a1a; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-top: 10px;">
+      No GPS data yet
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📡 Active Routes</h2>
+    <div id="routesList" style="background: #1a1a1a; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-top: 10px;">
+      Loading routes...
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🐛 Console Logs</h2>
+    <button class="button" onclick="clearLogs()">Clear</button>
+    <div id="consoleLogs" style="background: #1a1a1a; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-top: 10px; max-height: 400px; overflow-y: auto; font-size: 11px;">
+      (Console logs will appear here)
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB1RjGjAZ74fwhWwxTu7GxPIZvJKUsHBys",
+    authDomain: "tkres-bus-tracking.firebaseapp.com",
+    databaseURL: "https://tkres-bus-tracking-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tkres-bus-tracking",
+    storageBucket: "tkres-bus-tracking.firebasestorage.app",
+    messagingSenderId: "284217789696",
+    appId: "1:284217789696:web:44fdafc5f67dd78f4777e5"
+  };
+
+  let db = null;
+  let autoRefreshInterval = null;
+  let gpsWatchId = null;
+  const logElement = document.getElementById('consoleLogs');
+  const firebaseDataEl = document.getElementById('firebaseData');
+
+  // Override console.log
+  const originalLog = console.log;
+  console.log = function(...args) {
+    originalLog.apply(console, args);
+    const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
+    const line = document.createElement('div');
+    const time = new Date().toLocaleTimeString();
+    line.textContent = `[${time}] ${msg}`;
+    logElement.appendChild(line);
+    logElement.scrollTop = logElement.scrollHeight;
+    if (logElement.children.length > 100) {
+      logElement.removeChild(logElement.firstChild);
+    }
+  };
+
+  // Initialize
+  window.addEventListener('load', function() {
+    initializeFirebase();
+    checkGeoAPI();
+    checkLocationPermission();
+    loadRoutes();
+  });
+
+  function initializeFirebase() {
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      document.getElementById('firebaseStatus').innerHTML = '<span class="status-ok">✓ Connected</span>';
+      console.log('✅ Firebase initialized successfully');
+      
+      // Test database connection
+      db.ref('.info/connected').on('value', snap => {
+        if (snap.val() === true) {
+          document.getElementById('databaseStatus').innerHTML = '<span class="status-ok">✓ Connected</span>';
+          console.log('✅ Connected to Firebase Realtime Database');
+        } else {
+          document.getElementById('databaseStatus').innerHTML = '<span class="status-error">✗ Disconnected</span>';
+          console.log('❌ Disconnected from Firebase Realtime Database');
+        }
+      });
+    } catch (e) {
+      document.getElementById('firebaseStatus').innerHTML = '<span class="status-error">✗ Error: ' + e.message + '</span>';
+      console.log('❌ Firebase error:', e);
+    }
+  }
+
+  function checkGeoAPI() {
+    if (navigator.geolocation) {
+      document.getElementById('geoStatus').innerHTML = '<span class="status-ok">✓ Available</span>';
+      console.log('✅ Geolocation API available');
+    } else {
+      document.getElementById('geoStatus').innerHTML = '<span class="status-error">✗ Not available</span>';
+      console.log('❌ Geolocation API not available');
+    }
+  }
+
+  function checkLocationPermission() {
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' }).then(permission => {
+        if (permission.state === 'granted') {
+          document.getElementById('permStatus').innerHTML = '<span class="status-ok">✓ Granted</span>';
+          console.log('✅ Location permission: GRANTED');
+        } else if (permission.state === 'prompt') {
+          document.getElementById('permStatus').innerHTML = '<span class="status-warning">? Not asked yet</span>';
+          console.log('⚠️ Location permission: NOT ASKED');
+        } else {
+          document.getElementById('permStatus').innerHTML = '<span class="status-error">✗ Denied</span>';
+          console.log('❌ Location permission: DENIED');
+        }
+      });
+    }
+  }
+
+  function getGPSLocation() {
+    console.log('📍 Getting current GPS location...');
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const { latitude, longitude, accuracy } = position.coords;
+        const gpsDataEl = document.getElementById('gpsData');
+        gpsDataEl.innerHTML = `
+          <strong>✓ Location Found</strong><br>
+          Latitude: ${latitude.toFixed(6)}<br>
+          Longitude: ${longitude.toFixed(6)}<br>
+          Accuracy: ${accuracy.toFixed(0)}m<br>
+          Timestamp: ${new Date().toLocaleTimeString()}
+        `;
+        console.log('✅ GPS location:', { latitude, longitude, accuracy });
+      },
+      error => {
+        const gpsDataEl = document.getElementById('gpsData');
+        gpsDataEl.innerHTML = `<strong>✗ Error:</strong> ${error.message}`;
+        console.log('❌ GPS error:', error);
+      }
+    );
+  }
+
+  function watchGPSLocation() {
+    console.log('👁️ Watching GPS location...');
+    gpsWatchId = navigator.geolocation.watchPosition(
+      position => {
+        const { latitude, longitude, accuracy } = position.coords;
+        const gpsDataEl = document.getElementById('gpsData');
+        gpsDataEl.innerHTML = `
+          <strong>✓ Watching Location</strong><br>
+          Latitude: ${latitude.toFixed(6)}<br>
+          Longitude: ${longitude.toFixed(6)}<br>
+          Accuracy: ${accuracy.toFixed(0)}m<br>
+          Timestamp: ${new Date().toLocaleTimeString()}
+        `;
+        console.log('📍 GPS Update:', { latitude, longitude, accuracy });
+      },
+      error => {
+        console.log('❌ Watch error:', error);
+      }
+    );
+  }
+
+  function stopWatch() {
+    if (gpsWatchId) {
+      navigator.geolocation.clearWatch(gpsWatchId);
+      console.log('⏹️ Stopped watching GPS');
+    }
+  }
+
+  function refreshFirebaseData() {
+    if (!db) {
+      firebaseDataEl.textContent = '❌ Firebase not initialized';
+      return;
+    }
+    
+    console.log('🔄 Refreshing Firebase data...');
+    db.ref('buses').once('value', snapshot => {
+      const data = snapshot.val();
+      if (data) {
+        firebaseDataEl.textContent = JSON.stringify(data, null, 2);
+        console.log('✅ Firebase data:', data);
+      } else {
+        firebaseDataEl.textContent = '⚠️ No bus data in Firebase yet\n\n(Waiting for drivers to start tracking)';
+        console.log('⚠️ No bus data found');
+      }
+    }).catch(error => {
+      firebaseDataEl.textContent = '❌ Error: ' + error.message;
+      console.log('❌ Firebase error:', error);
+    });
+  }
+
+  function autoRefresh() {
+    if (autoRefreshInterval) return;
+    console.log('👁️ Starting auto-refresh (every 1 second)...');
+    autoRefreshInterval = setInterval(refreshFirebaseData, 1000);
+  }
+
+  function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+      autoRefreshInterval = null;
+      console.log('⏹️ Stopped auto-refresh');
+    }
+  }
+
+  function loadRoutes() {
+    console.log('📡 Loading routes from Django...');
+    fetch('/api/student/routes/')
+      .then(r => r.json())
+      .then(routes => {
+        const routesEl = document.getElementById('routesList');
+        if (routes && routes.length > 0) {
+          routesEl.innerHTML = routes.map((r, i) => `
+            <div style="padding: 8px; border-bottom: 1px solid #444;">
+              <strong>${i+1}. ${r.name}</strong><br>
+              Bus: ${r.bus_number || 'N/A'} | Active: ${r.is_active ? '✓' : '✗'}
+            </div>
+          `).join('');
+          console.log('✅ Loaded ' + routes.length + ' routes');
+        } else {
+          routesEl.innerHTML = '⚠️ No routes found';
+          console.log('⚠️ No routes in database');
+        }
+      })
+      .catch(e => {
+        document.getElementById('routesList').innerHTML = '❌ Error: ' + e.message;
+        console.log('❌ Routes error:', e);
+      });
+  }
+
+  function clearLogs() {
+    logElement.innerHTML = '';
+    console.log('🗑️ Logs cleared');
+  }
+</script>
+
+</body>
+</html>

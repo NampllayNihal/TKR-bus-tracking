@@ -17,6 +17,7 @@ urlpatterns = [
     path('stops/', views.stops_page, name='stops'),
     path('fees/', views.fees_page, name='fees'),
     path('live-tracker/', views.live_tracker_page, name='live-tracker'),
+    path('live-tracker/debug/', views.live_tracker_debug, name='live-tracker-debug'),
 
     # -------------------------
     # DRIVER
@@ -49,5 +50,11 @@ urlpatterns = [
         views.get_bus_location,
         name='get_bus_location'
     ),
+
+    # ==================================================
+    # 📡 API ROUTES
+    # ==================================================
+    path('api/student/routes/', views.api_get_routes, name='api_get_routes'),
 ]
+
 

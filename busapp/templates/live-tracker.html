@@ -54,6 +54,11 @@
     .back-btn:hover {
       background:#ffeb3b;
     }
+
+    .bus-marker {
+      background: none;
+      border: none;
+    }
   </style>
 </head>
 <body>
@@ -70,15 +75,9 @@
       <label for="routeFilter">Filter by Route:</label>
       <select id="routeFilter">
         <option value="all">All Routes</option>
-        <option value="1">Route 1 – Narapally</option>
-        <option value="2">Route 2 – Mehdipatnam</option>
-        <option value="3">Route 3 – Malkajgiri</option>
-        <option value="4">Route 4 – Hayath Nagar</option>
-        <option value="5">Route 5 – Alwal</option>
-        <option value="6">Route 6 – Musheerabad</option>
-        <option value="7">Route 7 – ECIL</option>
-        <option value="8">Route 8 – Chandrayangutta</option>
-        <option value="9">Route 9 – Kukatpally</option>
+        {% for route in routes %}
+        <option value="{{ route.bus_number }}" {% if student_route and student_route.id == route.id %}selected{% endif %}>{{ route.name }}</option>
+        {% endfor %}
       </select>
     </div>
 
@@ -114,6 +113,17 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  console.log("✅ Firebase initialized successfully");
+
+  // Check Firebase connection
+  db.ref('.info/connected').on('value', snap => {
+    if (snap.val() === true) {
+      console.log("✅ Connected to Firebase Realtime Database");
+    } else {
+      console.log("❌ Disconnected from Firebase Realtime Database");
+      lastUpdatedEl.textContent = "⚠️ Database connection lost";
+    }
+  });
 
   const map = L.map('map').setView([17.3850, 78.4867], 11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -151,41 +161,108 @@
       return;
     }
 
-    const busId = "BUS" + routeVal;
+    // Convert route value to bus ID format
+    // routeVal is now the bus_number (e.g., "BUS001")
+    const busId = routeVal;
+
+    if (!busId || busId === "all" || busId === "") {
+      console.error("❌ Invalid route/bus selection:", routeVal);
+      lastUpdatedEl.textContent = "❌ Invalid route selected";
+      return;
+    }
+
+    console.log("👀 Student listening to route:", routeVal, "-> Firebase path: buses/" + busId);
 
     activeListener = db.ref("buses/" + busId);
 
     activeListener.on("value", snapshot => {
       const b = snapshot.val();
 
-      if (!b || !b.lat || !b.lng) {
-        lastUpdatedEl.textContent = "Bus not started yet";
+      console.log("📨 Received data from Firebase for", busId, ":", b);
+
+      if (!b || b === null) {
+        console.log("⚠️ No data for bus", busId, "- driver hasn't started tracking yet");
+        lastUpdatedEl.textContent = "🔴 Waiting for driver to start tracking...";
+        clearMarker();
         return;
       }
 
-      const latLng = [b.lat, b.lng];
+      if (!b.lat || !b.lng) {
+        console.log("⚠️ Bus data missing lat/lng:", b);
+        lastUpdatedEl.textContent = "🚐 Bus location not available";
+        clearMarker();
+        return;
+      }
+
+      const lat = parseFloat(b.lat);
+      const lng = parseFloat(b.lng);
+      if (isNaN(lat) || isNaN(lng)) {
+        console.log("⚠️ Invalid lat/lng values:", b.lat, b.lng);
+        lastUpdatedEl.textContent = "🚐 Invalid location data";
+        clearMarker();
+        return;
+      }
+
+      const latLng = [lat, lng];
+
+      console.log("📍 Valid bus location:", latLng);
 
       if (!busMarker) {
         busMarker = L.marker(latLng, { icon: busIcon }).addTo(map);
+        console.log("✅ Bus marker created at", latLng);
       } else {
         busMarker.setLatLng(latLng);
+        console.log("✅ Bus marker updated to", latLng);
       }
 
       busMarker.bindPopup(`
-        <strong>${b.busId}</strong><br>
-        Route: ${b.route}<br>
-        Driver: ${b.driver}<br>
-        Last update: ${new Date(b.timestamp).toLocaleTimeString()}
+        <div style="font-family: Poppins; text-align: center;">
+          <strong style="font-size: 1.1em;">🚌 ${b.busId || busId}</strong><br>
+          <hr style="margin: 5px 0;">
+          Route: ${b.route || routeVal}<br>
+          Driver: ${b.driver || "N/A"}<br>
+          Accuracy: ${Math.round(b.accuracy || 0)}m<br>
+          <small>Last update: ${new Date(b.timestamp || Date.now()).toLocaleTimeString()}</small>
+        </div>
       `);
 
-      map.setView(latLng, 13);
-      lastUpdatedEl.textContent =
-        "Last update: " + new Date().toLocaleTimeString();
+      map.setView(latLng, 14);
+      lastUpdatedEl.textContent = "🟢 Last update: " + new Date().toLocaleTimeString();
+      console.log("✅ Map updated and centered on bus");
+    });
+
+    activeListener.on("error", error => {
+      console.error("❌ Firebase listener error for", busId, ":", error);
+      lastUpdatedEl.textContent = "⚠️ Connection error: " + error.message;
+      clearMarker();
     });
   }
 
   routeFilter.addEventListener("change", () => {
-    listenToRoute(routeFilter.value);
+    const selectedRoute = routeFilter.value;
+    console.log("🔄 Route filter changed to:", selectedRoute);
+    listenToRoute(selectedRoute);
+  });
+
+  // Auto-start listening if a route is pre-selected
+  document.addEventListener('DOMContentLoaded', function() {
+    const selectedValue = routeFilter.value;
+    console.log("📡 Page loaded. Pre-selected route:", selectedValue);
+    if (selectedValue && selectedValue !== "all") {
+      listenToRoute(selectedValue);
+    }
+  });
+
+  // Also check on page load
+  window.addEventListener('load', function() {
+    const selectedValue = routeFilter.value;
+    console.log("✅ Window loaded. Checking pre-selected route:", selectedValue);
+    if (selectedValue && selectedValue !== "all") {
+      // Give Firebase time to initialize
+      setTimeout(() => {
+        listenToRoute(selectedValue);
+      }, 500);
+    }
   });
 </script>
 

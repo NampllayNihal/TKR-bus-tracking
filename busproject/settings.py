@@ -23,7 +23,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'busapp',   # ✅ Your app
+    # ✅ New modular apps
+    'users',
+    'transport',
+    'payments',
+    'tracking',
+    
+    # ✅ REST Framework for future APIs
+    'rest_framework',
+    
+    # ✅ Legacy app (gradual deprecation)
+    'busapp',
 ]
 
 MIDDLEWARE = [

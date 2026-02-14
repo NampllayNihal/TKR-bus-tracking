@@ -111,31 +111,19 @@
   </div>
 
   <div class="card">
-    <label for="driverName">Driver Name</label>
-    <input type="text" id="driverName" placeholder="e.g., PRASAD" />
-
-    <label for="busId">Bus / Route</label>
-    <select id="busId">
-      <option value="">Select Bus</option>
-      <option value="BUS1">Bus 1 – Route 1 (Narapally)</option>
-      <option value="BUS2">Bus 2 – Route 2 (Mehdipatnam)</option>
-      <option value="BUS3">Bus 3 – Route 3 (Malkajgiri)</option>
-      <option value="BUS4">Bus 4 – Route 4 (Hayath Nagar)</option>
-      <option value="BUS5">Bus 5 – Route 5 (Alwal)</option>
-      <option value="BUS6">Bus 6 – Route 6 (Musheerabad)</option>
-      <option value="BUS7">Bus 7 – Route 7 (ECIL)</option>
-      <option value="BUS8">Bus 8 – Route 8 (Chandrayangutta)</option>
-      <option value="BUS9">Bus 9 – Route 9 (Kukatpally)</option>
-    </select>
+    <div style="margin-bottom: 12px;">
+      <strong>Driver:</strong> <span id="driverName">{{ user.get_full_name|default:user.username }}</span><br>
+      <strong>Assigned Route:</strong> <span id="assignedRoute">{{ driver.assigned_route.name|default:"No route assigned" }}</span>
+    </div>
 
     <div class="btn-row">
-      <button class="btn btn-start" onclick="startTracking()">▶ Start</button>
-      <button class="btn btn-stop" onclick="stopTracking()">■ Stop</button>
+      <button class="btn btn-start" onclick="startTracking()" id="startBtn">▶ Start Tracking</button>
+      <button class="btn btn-stop" onclick="stopTracking()" id="stopBtn" disabled>■ Stop Tracking</button>
     </div>
 
     <div class="status">
       <div><span class="label">Tracking Status:</span> <span id="statusText">Not started</span></div>
-      <div><span class="label">Last Location:</span> <span id="locText">–</span></div>
+      <div><span class="label">Current Location:</span> <span id="locText">–</span></div>
       <div><span class="label">Last Updated:</span> <span id="timeText">–</span></div>
     </div>
   </div>
@@ -176,51 +164,109 @@
 
   
 let watchId = null;
+let currentBusNumber = null;
+let driverName = null;
+let dataUpdateInterval = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Get bus_number from Django context
+  currentBusNumber = "{{ bus_number }}";
+  console.log("Raw bus_number from template:", "{{ bus_number }}");
+  
+  if (!currentBusNumber || currentBusNumber === "None" || currentBusNumber === "") {
+    console.error("❌ Bus number not set! This will cause Firebase errors.");
+    currentBusNumber = null;
+  }
+  
+  // Get driver name
+  const driverNameEl = document.getElementById('driverName');
+  driverName = driverNameEl.textContent.trim();
+  
+  if (currentBusNumber) {
+    console.log("✅ Driver loaded. Bus Number:", currentBusNumber, "| Driver:", driverName);
+  } else {
+    console.error("❌ ERROR: Bus number is null. Driver won't be able to broadcast location!");
+  }
+});
 
 function startTracking() {
-  const driverName = document.getElementById("driverName").value;
-  const busId = document.getElementById("busId").value;
-
-  if (!driverName || !busId) {
-    alert("Enter driver name and bus selection");
+  if (!currentBusNumber) {
+    alert("❌ No bus number assigned to you. Please contact admin.");
     return;
   }
 
-  const routeId = busId.replace("BUS", ""); // BUS1 → 1
+  document.getElementById("statusText").innerText = "🔴 Starting GPS tracking...";
+  document.getElementById("startBtn").disabled = true;
+  document.getElementById("stopBtn").disabled = false;
 
-  document.getElementById("statusText").innerText = "Tracking Started";
+  // First location update
+  var errorCount = 0;
 
   watchId = navigator.geolocation.watchPosition(
     position => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+      const timestamp = Date.now();
 
-      fetch("/api/driver/update-location/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCSRFToken()
-        },
-        body: JSON.stringify({
-          route_id: routeId,
-          latitude: lat,
-          longitude: lng
+      const busData = {
+        busId: currentBusNumber,
+        route: currentBusNumber,  // or keep as is
+        driver: driverName,
+        lat: lat,
+        lng: lng,
+        timestamp: timestamp,
+        accuracy: accuracy
+      };
+
+      if (!currentBusNumber) {
+        console.error("❌ Cannot update Firebase: currentBusNumber is null!");
+        document.getElementById("statusText").innerText = "❌ Bus number not set - contact admin";
+        return;
+      }
+
+      console.log("📍 Updating Firebase at path: buses/" + currentBusNumber, "Data:", busData);
+
+      db.ref("buses/" + currentBusNumber).set(busData)
+        .then(() => {
+          console.log("✅ Firebase update successful for", currentBusNumber);
+          document.getElementById("statusText").innerText = "🟢 Tracking Active - Broadcasting to students";
+          document.getElementById("locText").innerText = 
+            lat.toFixed(5) + ", " + lng.toFixed(5);
+          document.getElementById("timeText").innerText = 
+            new Date().toLocaleTimeString();
         })
-      });
-
-      document.getElementById("locText").innerText =
-        lat.toFixed(5) + ", " + lng.toFixed(5);
-
-      document.getElementById("timeText").innerText =
-        new Date().toLocaleTimeString();
+        .catch(error => {
+          console.error("❌ Firebase write error:", error.message);
+          console.error("Firebase error code:", error.code);
+          console.error("Full error:", error);
+          document.getElementById("statusText").innerText = "⚠️ Firebase error: " + error.message;
+        });
     },
     error => {
-      alert("GPS Error: " + error.message);
+      errorCount++;
+      console.error("❌ GPS Error:", error.message);
+      
+      let errorMsg = "GPS Error";
+      if (error.code === error.PERMISSION_DENIED) {
+        errorMsg = "GPS permission denied - enable location";
+      } else if (error.code === error.POSITION_UNAVAILABLE) {
+        errorMsg = "Location unavailable";
+      } else if (error.code === error.TIMEOUT) {
+        errorMsg = "GPS timeout - enable location services";
+      }
+      
+      document.getElementById("statusText").innerText = "⚠️ " + errorMsg;
+      
+      if (errorCount > 3) {
+        stopTracking();
+        alert("Failed to get GPS location. Please enable GPS and try again.");
+      }
     },
     {
       enableHighAccuracy: true,
       maximumAge: 0,
-      timeout: 5000
+      timeout: 10000
     }
   );
 }
@@ -228,23 +274,20 @@ function startTracking() {
 function stopTracking() {
   if (watchId) {
     navigator.geolocation.clearWatch(watchId);
-    document.getElementById("statusText").innerText = "Stopped";
-    alert("Tracking stopped");
-  }
-}
-
-// CSRF helper
-function getCSRFToken() {
-  let cookieValue = null;
-  const cookies = document.cookie.split(";");
-  for (let cookie of cookies) {
-    cookie = cookie.trim();
-    if (cookie.startsWith("csrftoken=")) {
-      cookieValue = cookie.substring("csrftoken=".length);
-      break;
+    watchId = null;
+    
+    // Remove from Firebase
+    if (currentBusNumber) {
+      console.log("🛑 Removing from Firebase:", currentBusNumber);
+      db.ref("buses/" + currentBusNumber).remove();
     }
+    
+    document.getElementById("statusText").innerText = "⏹️ Tracking Stopped";
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("stopBtn").disabled = true;
+    document.getElementById("locText").innerText = "–";
+    document.getElementById("timeText").innerText = "–";
   }
-  return cookieValue;
 }
 </script>
 
